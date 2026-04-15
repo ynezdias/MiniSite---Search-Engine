@@ -8,7 +8,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from search_engine import SearchEngine
 
-app = Flask(__name__, template_folder='templates')
+app = Flask(__name__, template_folder='templates', static_folder='../website', static_url_path='/pages')
 CORS(app)
 
 # Initialize search engine

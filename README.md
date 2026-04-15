@@ -2,6 +2,10 @@
 
 A precision-engineered search engine for a structured corpus of space exploration data.
 
+
+<img width="1908" height="1028" alt="image" src="https://github.com/user-attachments/assets/2c57678e-99fc-4f85-9d04-6f128ebf9e75" />
+
+
 ## Why this Architecture?
 
 ### 1. Compressed Trie (Radix Tree)

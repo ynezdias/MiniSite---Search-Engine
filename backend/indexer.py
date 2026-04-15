@@ -68,10 +68,48 @@ class CompressedTrie:
             if word[i:i+len(prefix)] == prefix:
                 i += len(prefix)
                 node = child
+            elif prefix.startswith(word[i:]):
+                # Word is a prefix of this edge, but doesn't reach the node
+                return -2 # Special code for "prefix match only"
             else:
                 return -1
         
         return node.postings_index
+
+    def search_prefix(self, prefix):
+        """Returns a list of all postings indices that start with this prefix."""
+        node = self.root
+        i = 0
+        while i < len(prefix):
+            char = prefix[i]
+            if char not in node.children:
+                return []
+            
+            child = node.children[char]
+            edge_prefix = child.prefix
+            
+            # Case 1: Prefix is longer or equal to edge
+            if prefix[i:i+len(edge_prefix)] == edge_prefix:
+                i += len(edge_prefix)
+                node = child
+            # Case 2: Prefix ends inside this edge
+            elif edge_prefix.startswith(prefix[i:]):
+                i = len(prefix)
+                node = child
+            else:
+                return []
+        
+        # We found the node representing the prefix. 
+        # Now collect all terminal nodes in this subtree.
+        return self._collect_all_terminal_indices(node)
+
+    def _collect_all_terminal_indices(self, node):
+        indices = []
+        if node.postings_index != -1:
+            indices.append(node.postings_index)
+        for child in node.children.values():
+            indices.extend(self._collect_all_terminal_indices(child))
+        return indices
 
 class Indexer:
     def __init__(self):

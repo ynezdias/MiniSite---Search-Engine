@@ -1,0 +1,296 @@
+{% raw %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmos Search Engine</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg: #05070a;
+            --accent: #60a5fa;
+            --accent-grad: linear-gradient(to right, #60a5fa, #a855f7);
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: radial-gradient(circle at center, #1a1f35 0%, #05070a 100%);
+            background-attachment: fixed;
+            color: #fff;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            text-align: center;
+            background: var(--accent-grad);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 40px;
+        }
+
+        .glass {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            margin-bottom: 30px;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        input {
+            flex: 1;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            padding: 15px 25px;
+            border-radius: 12px;
+            color: white;
+            font-size: 1.1rem;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 15px rgba(96, 165, 250, 0.2);
+        }
+
+        button {
+            background: var(--accent-grad);
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.02);
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid var(--glass-border);
+        }
+
+        .stat-val {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--accent);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.5;
+        }
+
+        .results {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .result-card {
+            padding: 25px;
+            border-radius: 15px;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            transition: all 0.3s;
+        }
+
+        .result-card:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.2);
+            transform: translateX(10px);
+        }
+
+        .res-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .res-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin: 0;
+        }
+
+        .res-score {
+            font-size: 0.8rem;
+            background: rgba(96, 165, 250, 0.1);
+            color: var(--accent);
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+
+        .res-file {
+            font-size: 0.85rem;
+            opacity: 0.4;
+            margin-bottom: 12px;
+        }
+
+        .res-snippet {
+            font-size: 1rem;
+            opacity: 0.8;
+            line-height: 1.6;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 50px;
+            opacity: 0.5;
+        }
+
+        .loader {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        function App() {
+            const [query, setQuery] = useState('');
+            const [results, setResults] = useState([]);
+            const [stats, setStats] = useState(null);
+            const [loading, setLoading] = useState(false);
+            const [hasSearched, setHasSearched] = useState(false);
+
+            useEffect(() => {
+                fetchStats();
+            }, []);
+
+            const fetchStats = () => {
+                axios.get('/api/stats')
+                    .then(res => setStats(res.data))
+                    .catch(e => console.error(e));
+            };
+
+            const search = (e) => {
+                if (e) e.preventDefault();
+                if (!query.trim()) return;
+
+                setLoading(true);
+                axios.get(`/api/search?q=${encodeURIComponent(query)}`)
+                    .then(res => {
+                        setResults(res.data.results);
+                        setStats(res.data.stats);
+                        setHasSearched(true);
+                    })
+                    .finally(() => setLoading(false));
+            };
+
+            return (
+                <div className="container">
+                    <h1>Cosmos Search</h1>
+                    
+                    <div className="glass">
+                        <form className="search-box" onSubmit={search}>
+                            <input 
+                                type="text" 
+                                placeholder="Search the galaxy..." 
+                                value={query} 
+                                onChange={e => setQuery(e.target.value)}
+                            />
+                            <button type="submit">
+                                {loading ? 'Scanning...' : 'Search'}
+                            </button>
+                        </form>
+
+                        {stats && (
+                            <div className="stats-row">
+                                <div className="stat-card">
+                                    <div className="stat-val">{stats.docs_crawled}</div>
+                                    <div className="stat-label">Pages</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-val">{stats.unique_terms}</div>
+                                    <div className="stat-label">Terms</div>
+                                </div>
+                                <div className="stat-card" style={{gridColumn: 'span 2'}}>
+                                    <div className="stat-label">Crawl List</div>
+                                    <div style={{fontSize: '0.7rem', opacity: 0.6, marginTop: '5px'}}>
+                                        {stats.pages.join(', ')}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="results">
+                        {loading ? (
+                            <div className="no-results">🚀 Navigating the stars...</div>
+                        ) : results.length > 0 ? (
+                            results.map((r, i) => (
+                                <div key={i} className="result-card">
+                                    <div className="res-header">
+                                        <h3 className="res-title">{r.title}</h3>
+                                        <div className="res-score">Score: {r.score}</div>
+                                    </div>
+                                    <div className="res-file">{r.file}</div>
+                                    <div className="res-snippet">{r.snippet}</div>
+                                </div>
+                            ))
+                        ) : hasSearched ? (
+                            <div className="no-results">No signals found for "{query}".</div>
+                        ) : (
+                            <div className="no-results">Enter keywords to begin exploration.</div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
+{% endraw %}

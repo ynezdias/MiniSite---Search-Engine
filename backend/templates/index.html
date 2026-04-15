@@ -271,7 +271,9 @@
                             results.map((r, i) => (
                                 <div key={i} className="result-card">
                                     <div className="res-header">
-                                        <h3 className="res-title">{r.title}</h3>
+                                        <a href={`/pages/${r.file}`} target="_blank" className="res-title" style={{textDecoration: 'none'}}>
+                                            {r.title}
+                                        </a>
                                         <div className="res-score">Score: {r.score}</div>
                                     </div>
                                     <div className="res-file">{r.file}</div>

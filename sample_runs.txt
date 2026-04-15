@@ -1,0 +1,47 @@
+SAMPLE RUNS FOR SPACE EXPLORATION SEARCH ENGINE
+==============================================
+
+CRAWL STATISTICS:
+- Documents Crawled: 8
+- Unique Indexed Terms: 224
+- Sample Pages: index.html, moon_landing.html, mars_colonization.html, voyager_probes.html, james_webb.html, spacex_starship.html, iss_station.html, artemis_program.html
+
+CASE 1: SINGLE KEYWORD (MOON)
+----------------------------------------------
+Input: "Moon"
+Results found: 4
+Top Result: The Moon: Landing and Future (moon_landing.html)
+Score: 8
+Snippet: The First Moon Landing On July 20, 1969, the Apollo 11 mission successfully landed the first humans on the Moon. Neil Armstrong and Buzz Aldrin became legends...
+
+CASE 2: MULTI-KEYWORD (MARS SPACEX)
+----------------------------------------------
+Input: "Mars SpaceX"
+Results found: 2
+Top Result: Mars Colonization: The Next Frontier (mars_colonization.html)
+Score: 14
+Snippet: Colonizing the Red Planet Mars has long been the primary target for human colonization. With its thin atmosphere and frozen water, it is the most habitable pla...
+
+CASE 3: BOUNDARY CASE - EMPTY QUERY
+----------------------------------------------
+Input: ""
+API Output: {"results": [], "message": "Empty query", "stats": {...}}
+Behavior: Correctly returns empty list and helpful message.
+
+CASE 4: BOUNDARY CASE - STOP-WORDS ONLY
+----------------------------------------------
+Input: "the and in"
+API Output: {"results": [], "stats": {...}}
+Behavior: Tokens are filtered out by stop-word removal, resulting in no results.
+
+CASE 5: BOUNDARY CASE - NONEXISTENT TERM
+----------------------------------------------
+Input: "alienspacestation"
+API Output: {"results": [], "stats": {...}}
+Behavior: Term not found in Compressed Trie; returns empty postings.
+
+CASE 6: BOUNDARY CASE - NO-INTERSECTION MULTIWORD
+----------------------------------------------
+Input: "moon voyager"
+API Output: {"results": [], "stats": {...}}
+Behavior: Intersection of "moon" (found in lunar pages) and "voyager" (found in deep space pages) results in empty set. Correctly follows AND logic.
